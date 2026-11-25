@@ -36,3 +36,6 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Real Supabase keys for production builds; use EAS environment variables instead
+.env.production

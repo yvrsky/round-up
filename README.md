@@ -1,50 +1,47 @@
-# Welcome to your Expo app 👋
+# RoundUp
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Find safe, skill-matched local training partners for Muay Thai, BJJ (Gi/No-Gi), Boxing, and Running.
+Expo (SDK 58) + Expo Router + NativeWind v4, with Supabase (Postgres + PostGIS, Auth, Realtime, RLS).
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Setup
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env.local   # fill in your Supabase URL + anon key
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+In your Supabase project's Auth settings, add `round-up://**` (and your web origin) to the redirect
+URLs so magic links open the app.
 
-## Learn more
+`react-native-maps` works in Expo Go on iOS. For Android store builds, add a Google Maps key via the
+`react-native-maps` config plugin (`androidGoogleMapsApiKey`) and use a development build.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Database
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The schema, RLS policies, triggers, and RPCs live in `supabase/migrations/0001_init.sql`.
 
-## Join the community
+```bash
+npx supabase start          # local stack: applies migrations + supabase/seed.sql (Kyiv gyms)
+npx supabase db push        # apply migrations to the linked remote project
+```
 
-Join our community of developers creating universal apps.
+Local magic-link emails land in Mailpit at http://127.0.0.1:54324.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Privacy model: `users.email` and `users.base_location` are never granted to API roles. Select
+profiles with `PUBLIC_PROFILE_COLUMNS` (`src/types/models.ts`), never `*`. Session status changes
+(accept, cancel) go through RPCs, not direct updates.
+
+### Tests and types (require Docker)
+
+```bash
+sh scripts/db-test/run.sh        # RLS / RPC / trigger tests against a throwaway PostGIS container
+sh scripts/db-test/gen-types.sh  # regenerate src/types/database.types.ts from the migrations
+```
+
+## Checks
+
+```bash
+npx tsc --noEmit
+npx expo lint
+```
